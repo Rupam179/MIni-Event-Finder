@@ -321,8 +321,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Rupam Mukherjee**
 - GitHub: [@rupam179](https://github.com/rupam179)
-- LinkedIn: [Rupam Mukherjee](https://linkedin.com/in/rupam-mukherjee)
-- Email: rupam.mukherjee@email.com
+- LinkedIn: [Rupam Mukherjee](https://linkedin.com/in/rupam-mukherjee-647a092b0)
+- Email: mukherjeerupam14@email.com
 
 ---
 
