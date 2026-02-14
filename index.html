@@ -1,15 +1,707 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="description" content="Discover and create amazing events near you" />
-    <title>Mini Event Finder</title>
-  </head>
-  <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Event Finder - Discover Local Events</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .card-hover {
+      transition: all 0.3s ease;
+    }
+    
+    .card-hover:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    .badge-category {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .modal-backdrop {
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Mock API - In production, this would connect to the backend
+    const mockAPI = {
+      events: [
+        {
+          id: '1',
+          title: 'Tech Meetup: AI & Machine Learning',
+          description: 'Join us for an evening of AI discussions and networking with industry professionals.',
+          date: '2026-02-20',
+          time: '18:00',
+          location: 'Tech Hub, Downtown',
+          category: 'Technology',
+          attendees: ['user1', 'user2'],
+          maxAttendees: 50,
+          organizer: 'John Doe',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '2',
+          title: 'Yoga in the Park',
+          description: 'Free outdoor yoga session for all levels. Bring your own mat!',
+          date: '2026-02-16',
+          time: '08:00',
+          location: 'Central Park',
+          category: 'Health',
+          attendees: ['user3'],
+          maxAttendees: 30,
+          organizer: 'Sarah Smith',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '3',
+          title: 'Local Art Exhibition',
+          description: 'Showcase of local artists featuring paintings, sculptures, and mixed media.',
+          date: '2026-02-25',
+          time: '14:00',
+          location: 'City Art Gallery',
+          category: 'Arts',
+          attendees: [],
+          maxAttendees: 100,
+          organizer: 'Art Community',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '4',
+          title: 'Coffee & Code',
+          description: 'Casual coding session where developers meet to work on projects and share knowledge.',
+          date: '2026-02-17',
+          time: '10:00',
+          location: 'The Coffee Lab',
+          category: 'Technology',
+          attendees: ['user1'],
+          maxAttendees: 20,
+          organizer: 'Dev Community',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '5',
+          title: 'Marathon Training Group',
+          description: 'Weekly running group preparing for the spring marathon. All paces welcome!',
+          date: '2026-02-15',
+          time: '07:00',
+          location: 'Riverside Trail',
+          category: 'Sports',
+          attendees: ['user2', 'user4', 'user5'],
+          maxAttendees: 25,
+          organizer: 'Runners Club',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '6',
+          title: 'Book Club Meeting',
+          description: 'Monthly book club discussion. This month: "The Midnight Library"',
+          date: '2026-02-22',
+          time: '19:00',
+          location: 'Corner Bookshop',
+          category: 'Social',
+          attendees: ['user6', 'user7'],
+          maxAttendees: 15,
+          organizer: 'Literary Circle',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '7',
+          title: 'Photography Walk',
+          description: 'Explore the city with fellow photographers. All skill levels welcome!',
+          date: '2026-02-18',
+          time: '15:00',
+          location: 'Historic District',
+          category: 'Arts',
+          attendees: ['user8'],
+          maxAttendees: 12,
+          organizer: 'Photo Enthusiasts',
+          createdAt: new Date().toISOString()
+        },
+        {
+          id: '8',
+          title: 'Startup Pitch Night',
+          description: 'Watch local entrepreneurs pitch their ideas to investors and provide feedback.',
+          date: '2026-03-01',
+          time: '18:30',
+          location: 'Innovation Center',
+          category: 'Business',
+          attendees: ['user9', 'user10', 'user11'],
+          maxAttendees: 60,
+          organizer: 'Startup Hub',
+          createdAt: new Date().toISOString()
+        }
+      ],
+      
+      getEvents: function(filters = {}) {
+        let filtered = [...this.events];
+        
+        if (filters.category && filters.category !== 'all') {
+          filtered = filtered.filter(e => e.category === filters.category);
+        }
+        
+        if (filters.search) {
+          const search = filters.search.toLowerCase();
+          filtered = filtered.filter(e =>
+            e.title.toLowerCase().includes(search) ||
+            e.description.toLowerCase().includes(search) ||
+            e.location.toLowerCase().includes(search)
+          );
+        }
+        
+        if (filters.date) {
+          filtered = filtered.filter(e => e.date === filters.date);
+        }
+        
+        return filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+      },
+      
+      createEvent: function(event) {
+        const newEvent = {
+          ...event,
+          id: Date.now().toString(),
+          attendees: [],
+          createdAt: new Date().toISOString()
+        };
+        this.events.push(newEvent);
+        return newEvent;
+      },
+      
+      joinEvent: function(eventId, userId) {
+        const event = this.events.find(e => e.id === eventId);
+        if (!event) return null;
+        if (event.attendees.includes(userId)) return event;
+        if (event.attendees.length >= event.maxAttendees) return null;
+        event.attendees.push(userId);
+        return event;
+      },
+      
+      leaveEvent: function(eventId, userId) {
+        const event = this.events.find(e => e.id === eventId);
+        if (!event) return null;
+        event.attendees = event.attendees.filter(id => id !== userId);
+        return event;
+      }
+    };
+
+    // Category colors
+    const categoryColors = {
+      Technology: 'bg-blue-100 text-blue-800',
+      Health: 'bg-green-100 text-green-800',
+      Arts: 'bg-purple-100 text-purple-800',
+      Sports: 'bg-orange-100 text-orange-800',
+      Social: 'bg-pink-100 text-pink-800',
+      Business: 'bg-indigo-100 text-indigo-800'
+    };
+
+    // Event Card Component
+    function EventCard({ event, onJoin, onLeave, isJoined }) {
+      const categoryColor = categoryColors[event.category] || 'bg-gray-100 text-gray-800';
+      const spotsLeft = event.maxAttendees - event.attendees.length;
+      const isFull = spotsLeft === 0;
+      
+      const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      };
+
+      return (
+        <div className="bg-white rounded-xl shadow-md overflow-hidden card-hover animate-fade-in">
+          <div className="p-6">
+            <div className="flex justify-between items-start mb-3">
+              <span className={`badge-category ${categoryColor}`}>
+                {event.category}
+              </span>
+              <div className="text-right">
+                <div className="text-sm font-semibold text-gray-900">{formatDate(event.date)}</div>
+                <div className="text-xs text-gray-500">{event.time}</div>
+              </div>
+            </div>
+            
+            <h3 className="text-xl font-bold text-gray-900 mb-2">{event.title}</h3>
+            <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
+            
+            <div className="flex items-center text-sm text-gray-500 mb-4">
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              {event.location}
+            </div>
+            
+            <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+              <div className="flex items-center">
+                <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span className="text-sm text-gray-600">
+                  {event.attendees.length}/{event.maxAttendees}
+                  {isFull && <span className="ml-2 text-red-600 font-semibold">Full</span>}
+                  {!isFull && spotsLeft <= 5 && <span className="ml-2 text-orange-600 font-semibold">{spotsLeft} left</span>}
+                </span>
+              </div>
+              
+              {isJoined ? (
+                <button
+                  onClick={() => onLeave(event.id)}
+                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg font-medium hover:bg-gray-300 transition-colors text-sm"
+                >
+                  Leave
+                </button>
+              ) : (
+                <button
+                  onClick={() => onJoin(event.id)}
+                  disabled={isFull}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors text-sm ${
+                    isFull
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700'
+                  }`}
+                >
+                  {isFull ? 'Full' : 'Join Event'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Create Event Modal
+    function CreateEventModal({ isOpen, onClose, onCreate }) {
+      const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        date: '',
+        time: '',
+        location: '',
+        category: 'Technology',
+        maxAttendees: 50,
+        organizer: ''
+      });
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        onCreate(formData);
+        setFormData({
+          title: '',
+          description: '',
+          date: '',
+          time: '',
+          location: '',
+          category: 'Technology',
+          maxAttendees: 50,
+          organizer: ''
+        });
+      };
+
+      if (!isOpen) return null;
+
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Create New Event</h2>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Event Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="Amazing Event Name"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  rows="3"
+                  placeholder="Tell people what your event is about..."
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Date *</label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.date}
+                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Time *</label>
+                  <input
+                    type="time"
+                    required
+                    value={formData.time}
+                    onChange={(e) => setFormData({...formData, time: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Location *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.location}
+                  onChange={(e) => setFormData({...formData, location: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="Venue name or address"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Category *</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({...formData, category: e.target.value})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option>Technology</option>
+                    <option>Health</option>
+                    <option>Arts</option>
+                    <option>Sports</option>
+                    <option>Social</option>
+                    <option>Business</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Max Attendees</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.maxAttendees}
+                    onChange={(e) => setFormData({...formData, maxAttendees: parseInt(e.target.value)})}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Organizer Name</label>
+                <input
+                  type="text"
+                  value={formData.organizer}
+                  onChange={(e) => setFormData({...formData, organizer: e.target.value})}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="Your name or organization"
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all"
+                >
+                  Create Event
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    // Main App Component
+    function App() {
+      const [events, setEvents] = useState([]);
+      const [filteredEvents, setFilteredEvents] = useState([]);
+      const [searchTerm, setSearchTerm] = useState('');
+      const [selectedCategory, setSelectedCategory] = useState('all');
+      const [joinedEvents, setJoinedEvents] = useState(new Set(['1', '4'])); // Mock joined events
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [showNotification, setShowNotification] = useState(false);
+      const [notificationMessage, setNotificationMessage] = useState('');
+
+      const categories = ['all', 'Technology', 'Health', 'Arts', 'Sports', 'Social', 'Business'];
+      const currentUserId = 'currentUser'; // Mock user ID
+
+      useEffect(() => {
+        loadEvents();
+      }, []);
+
+      useEffect(() => {
+        filterEvents();
+      }, [events, searchTerm, selectedCategory]);
+
+      const loadEvents = () => {
+        const allEvents = mockAPI.getEvents();
+        setEvents(allEvents);
+      };
+
+      const filterEvents = () => {
+        const filtered = mockAPI.getEvents({
+          search: searchTerm,
+          category: selectedCategory
+        });
+        setFilteredEvents(filtered);
+      };
+
+      const handleJoinEvent = (eventId) => {
+        const result = mockAPI.joinEvent(eventId, currentUserId);
+        if (result) {
+          setJoinedEvents(new Set([...joinedEvents, eventId]));
+          loadEvents();
+          showNotificationToast('Successfully joined event! 🎉');
+        } else {
+          showNotificationToast('Unable to join event', true);
+        }
+      };
+
+      const handleLeaveEvent = (eventId) => {
+        mockAPI.leaveEvent(eventId, currentUserId);
+        const newJoined = new Set(joinedEvents);
+        newJoined.delete(eventId);
+        setJoinedEvents(newJoined);
+        loadEvents();
+        showNotificationToast('Left event');
+      };
+
+      const handleCreateEvent = (eventData) => {
+        mockAPI.createEvent(eventData);
+        loadEvents();
+        setIsModalOpen(false);
+        showNotificationToast('Event created successfully! 🎊');
+      };
+
+      const showNotificationToast = (message, isError = false) => {
+        setNotificationMessage(message);
+        setShowNotification(true);
+        setTimeout(() => setShowNotification(false), 3000);
+      };
+
+      const upcomingEvents = filteredEvents.filter(e => new Date(e.date) >= new Date());
+      const myEvents = events.filter(e => joinedEvents.has(e.id));
+
+      return (
+        <div className="min-h-screen bg-gray-50">
+          {/* Header */}
+          <header className="gradient-bg text-white shadow-lg">
+            <div className="max-w-7xl mx-auto px-4 py-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold mb-1">Mini Event Finder</h1>
+                  <p className="text-purple-100">Discover and join amazing local events</p>
+                </div>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="px-6 py-3 bg-white text-purple-600 rounded-lg font-semibold hover:bg-purple-50 transition-colors shadow-lg flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  Create Event
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Notification Toast */}
+          {showNotification && (
+            <div className="fixed top-4 right-4 z-50 animate-fade-in">
+              <div className="bg-white rounded-lg shadow-xl px-6 py-4 flex items-center gap-3 border border-gray-200">
+                <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-gray-800 font-medium">{notificationMessage}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Main Content */}
+          <main className="max-w-7xl mx-auto px-4 py-8">
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-500 text-sm font-medium">Total Events</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{events.length}</p>
+                  </div>
+                  <div className="bg-purple-100 rounded-full p-3">
+                    <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-500 text-sm font-medium">Upcoming</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{upcomingEvents.length}</p>
+                  </div>
+                  <div className="bg-blue-100 rounded-full p-3">
+                    <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-500 text-sm font-medium">My Events</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-1">{myEvents.length}</p>
+                  </div>
+                  <div className="bg-green-100 rounded-full p-3">
+                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Filters */}
+            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Search events..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                    <svg className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {categories.map(category => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
+                        selectedCategory === category
+                          ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {category === 'all' ? 'All Events' : category}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Events Grid */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                {selectedCategory === 'all' ? 'All Events' : `${selectedCategory} Events`}
+                <span className="text-gray-400 text-lg ml-2">({filteredEvents.length})</span>
+              </h2>
+              
+              {filteredEvents.length === 0 ? (
+                <div className="bg-white rounded-xl shadow-md p-12 text-center">
+                  <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No events found</h3>
+                  <p className="text-gray-500">Try adjusting your filters or create a new event!</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredEvents.map(event => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      onJoin={handleJoinEvent}
+                      onLeave={handleLeaveEvent}
+                      isJoined={joinedEvents.has(event.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </main>
+
+          {/* Create Event Modal */}
+          <CreateEventModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onCreate={handleCreateEvent}
+          />
+
+          {/* Footer */}
+          <footer className="bg-white border-t border-gray-200 mt-12">
+            <div className="max-w-7xl mx-auto px-4 py-6 text-center text-gray-500 text-sm">
+              <p>Mini Event Finder - Discover and connect with your community</p>
+              <p className="mt-2">Built with React & Express</p>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
 </html>
