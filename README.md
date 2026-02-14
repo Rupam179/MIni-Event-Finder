@@ -5,8 +5,6 @@ Users can create, discover, and join events with real-time updates and smart fil
 
 [![Status](https://img.shields.io/badge/Status-Live-success)](https://teal-pavlova-ed969d.netlify.app/)
 [![Live Demo](https://img.shields.io/badge/Live-Demo-blue)](https://teal-pavlova-ed969d.netlify.app/)
-![React](https://img.shields.io/badge/React-18-blue)
-![Node.js](https://img.shields.io/badge/Node.js-Express-green)
 
 🌐 **Live Website:**  
 👉 https://teal-pavlova-ed969d.netlify.app/
