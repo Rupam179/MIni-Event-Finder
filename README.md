@@ -231,12 +231,10 @@ MIT License
 ---
 
 ## 👨‍💻 Author
-
 **Rupam Mukherjee**
-
-GitHub: [Rupam179](https://github.com/Rupam179)
-LinkedIn: [Rupam Mukherjee/](https://www.linkedin.com/in/rupam-mukherjee-647a092b0/)
-Email: [mukherjeerupam14@gmail.com](mailto:mukherjeerupam14@gmail.com)
+- GitHub: [@Rupam179](https://github.com/Rupam179)
+- LinkedIn: [Rupam Mukherjee](https://www.linkedin.com/in/rupam-mukherjee-647a092b0/)
+- Email: mukherjeerupam14@gmail.com
 
 ---
 
