@@ -1,5 +1,7 @@
 # 🎯 Mini Event Finder
 
+> **Author:** Rupam Mukherjee
+
 A full-stack **event discovery web application** built using **Node.js + Express (backend)** and **React (frontend)**.  
 Users can create, discover, and join events with real-time updates and smart filtering.
 
